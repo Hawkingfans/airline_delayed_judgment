@@ -1,104 +1,85 @@
-# Byte-compiled / optimized / DLL files
-__pycache__/
-*.py[cod]
-*$py.class
+# -*- coding: utf-8 -*-
+import tensorflow as tf
+import numpy as np
 
-# C extensions
-*.so
 
-# Distribution / packaging
-.Python
-build/
-develop-eggs/
-dist/
-downloads/
-eggs/
-.eggs/
-lib/
-lib64/
-parts/
-sdist/
-var/
-wheels/
-*.egg-info/
-.installed.cfg
-*.egg
-MANIFEST
+def add_layer(inputs, in_size, out_size, activation_function=None):
+    # add one more layer and return the output of this layer
+    Weights = tf.Variable(tf.ones([in_size, out_size]))    
+    biases = tf.Variable(tf.zeros([1 , out_size])+ 0.1 )   
+    Wx_plus_b = tf.matmul(inputs,Weights ) + biases
+    if activation_function is None:
+        outputs = Wx_plus_b
+    else:
+        outputs = activation_function(Wx_plus_b)
+    return outputs    
 
-# PyInstaller
-#  Usually these files are written by a python script from a template
-#  before PyInstaller builds the exe, so as to inject date/other infos into it.
-*.manifest
-*.spec
+# define placeholder for inputs to network
+xs = tf.placeholder(tf.float32,[1,8])
+ys = tf.placeholder(tf.float32,[1,1])
 
-# Installer logs
-pip-log.txt
-pip-delete-this-directory.txt
+# add hidden layer1
+l1 = add_layer(xs, 8, 6, activation_function = tf.nn.relu) 
 
-# Unit test / coverage reports
-htmlcov/
-.tox/
-.coverage
-.coverage.*
-.cache
-nosetests.xml
-coverage.xml
-*.cover
-.hypothesis/
-.pytest_cache/
+# add hidden layer2
+l2 = add_layer(l1, 6, 3, activation_function = tf.nn.relu)  
 
-# Translations
-*.mo
-*.pot
+# add output layer
+y = add_layer(l2, 3, 1, activation_function = None)
 
-# Django stuff:
-*.log
-local_settings.py
-db.sqlite3
+loss = tf.reduce_mean(tf.reduce_sum(tf.square(ys - y),
+                     reduction_indices=[1]))
+                     
+train_step = tf.train.GradientDescentOptimizer(0.52).minimize(loss)
 
-# Flask stuff:
-instance/
-.webassets-cache
+data = np.loadtxt('airline_data_processed.txt')
 
-# Scrapy stuff:
-.scrapy
+#將資料正規化
+transpose_data=np.transpose(data)
 
-# Sphinx documentation
-docs/_build/
+column1= transpose_data[0, 0:]
+column2= transpose_data[1, 0:]
+column3= transpose_data[2, 0:]
+column4= transpose_data[3, 0:]
+column5= transpose_data[4, 0:]
+column6= transpose_data[5, 0:]
+column7= transpose_data[6, 0:]
+column8= transpose_data[7, 0:]
+column9= transpose_data[8, 0:]
 
-# PyBuilder
-target/
+norm_column1=(column1-column1.min())/(column1.max()-column1.min())
+norm_column2=(column2-column2.min())/(column2.max()-column2.min())
+norm_column3=(column3-column3.min())/(column3.max()-column3.min())
+norm_column4=(column4-column4.min())/(column4.max()-column4.min())
+norm_column5=(column5-column5.min())/(column5.max()-column5.min())
+norm_column6=(column6-column6.min())/(column6.max()-column6.min())
+norm_column7=(column7-column7.min())/(column7.max()-column7.min())
+norm_column8=(column8-column8.min())/(column8.max()-column8.min())
+#合併為新矩陣
+norm_data=np.transpose(np.vstack((norm_column1,norm_column2,norm_column3,
+                                  norm_column4,norm_column5,norm_column6,
+                                  norm_column7,norm_column8,column9)))    
 
-# Jupyter Notebook
-.ipynb_checkpoints
+init = tf.global_variables_initializer()
 
-# pyenv
-.python-version
-
-# celery beat schedule file
-celerybeat-schedule
-
-# SageMath parsed files
-*.sage.py
-
-# Environments
-.env
-.venv
-env/
-venv/
-ENV/
-env.bak/
-venv.bak/
-
-# Spyder project settings
-.spyderproject
-.spyproject
-
-# Rope project settings
-.ropeproject
-
-# mkdocs documentation
-/site
-
-# mypy
-.mypy_cache/
+with tf.Session() as sess:
+    sess.run(init)        
+    #訓練部分(扣除前50筆資料所剩餘的)    
+    for i  in range(30000):      
+        n = np.random.randint(50, 1175 )
+        line_data = norm_data[np.newaxis, n, 0: 8]
+        expect = data[n, 8]
+        expected= np.reshape(expect,[1,1])
+        sess.run(train_step, feed_dict={xs: line_data,ys: expected})        
+            
+    #驗證部分(前50筆資料)        
+    for k in range(0,50):
+        examine_data = norm_data[np.newaxis, k, 0: 8]
+        answer = norm_data[k, 8]    
+        output = sess.run( y,feed_dict={xs: examine_data})    
+        #每五筆印出一次
+        if k % 5 == 0:
+            
+            print("output =",output)
+            print("answer =", answer)        
+            print("======================")
