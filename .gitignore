@@ -34,19 +34,18 @@ train_step = tf.train.GradientDescentOptimizer(0.52).minimize(loss)
 
 data = np.loadtxt('airline_data_processed.txt')
 
+data = np.loadtxt('airline_data_processed.txt')
+#將data每一行提取出來
+column1= data[:,0,np.newaxis]
+column2= data[:,1,np.newaxis]
+column3= data[:,2,np.newaxis]
+column4= data[:,3,np.newaxis]
+column5= data[:,4,np.newaxis]
+column6= data[:,5,np.newaxis]
+column7= data[:,6,np.newaxis]
+column8= data[:,7,np.newaxis]
+column9= data[:,8,np.newaxis]
 #將資料正規化
-transpose_data=np.transpose(data)
-
-column1= transpose_data[0, 0:]
-column2= transpose_data[1, 0:]
-column3= transpose_data[2, 0:]
-column4= transpose_data[3, 0:]
-column5= transpose_data[4, 0:]
-column6= transpose_data[5, 0:]
-column7= transpose_data[6, 0:]
-column8= transpose_data[7, 0:]
-column9= transpose_data[8, 0:]
-
 norm_column1=(column1-column1.min())/(column1.max()-column1.min())
 norm_column2=(column2-column2.min())/(column2.max()-column2.min())
 norm_column3=(column3-column3.min())/(column3.max()-column3.min())
@@ -55,10 +54,10 @@ norm_column5=(column5-column5.min())/(column5.max()-column5.min())
 norm_column6=(column6-column6.min())/(column6.max()-column6.min())
 norm_column7=(column7-column7.min())/(column7.max()-column7.min())
 norm_column8=(column8-column8.min())/(column8.max()-column8.min())
-#合併為新矩陣
-norm_data=np.transpose(np.vstack((norm_column1,norm_column2,norm_column3,
+#行與行合併為新矩陣
+norm_data=np.hstack((norm_column1,norm_column2,norm_column3,
                                   norm_column4,norm_column5,norm_column6,
-                                  norm_column7,norm_column8,column9)))    
+                                  norm_column7,norm_column8,column9))     
 
 init = tf.global_variables_initializer()
 
